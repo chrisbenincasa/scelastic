@@ -1,11 +1,16 @@
 package com.chrisbenincasa.scelastic.params
 
-import com.chrisbenincasa.scelastic.queries.{CompoundQuery, MatchAllQuery, Query}
+import com.chrisbenincasa.scelastic.queries.{AggregationQuery, CompoundQuery, MatchAllQuery, Query}
 import com.chrisbenincasa.scelastic.{OptionalParam, Param}
 
 case class QueryParam(query: Query)
 object QueryParam {
   implicit val param: Param[QueryParam] = Param(QueryParam(MatchAllQuery))
+}
+
+case class AggregationQueryParam(aggregationQuery: AggregationQuery)
+object AggregationQueryParam {
+  implicit val param: Param[AggregationQueryParam] = Param.optional[AggregationQueryParam]
 }
 
 case class SizeParam(size: Int)

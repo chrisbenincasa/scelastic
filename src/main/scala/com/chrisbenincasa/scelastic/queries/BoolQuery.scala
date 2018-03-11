@@ -3,7 +3,7 @@ package com.chrisbenincasa.scelastic.queries
 import com.chrisbenincasa.scelastic.params.CompoundQueryParam
 import com.chrisbenincasa.scelastic.{ParameterizedBuilder, Params}
 
-class BoolQueryBuilder private (val params: Params) extends ParameterizedBuilder[BoolQueryBuilder] {
+class BoolQueryBuilder private (val params: Params) extends ParameterizedBuilder[BoolQueryBuilder, BoolCompoundQuery] {
   def withMust(qs: Query*): BoolQueryBuilder = configuredCopy(_.copy(must = Some(qs.seq)))
   def addMust(qs: Query*): BoolQueryBuilder = configuredCopy(curr => curr.copy(must = Some(curr.must.getOrElse(Seq.empty) ++ qs.seq)))
 

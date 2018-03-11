@@ -16,8 +16,10 @@ case object MatchNoneQuery extends Map.Map1[String, EmptyObject]("match_none", E
 trait MatchQueryClause
 case class MatchQuery(`match`: MatchQueryClause) extends MatchQueryLike
 case class MatchSimple(field: String, value: String) extends Map.Map1[String, String](field, value) with MatchQueryClause
-case class MatchSimpleBody(query: String, operator: Option[String])
-case class MatchComplex(body: MatchSimpleBody) extends Map.Map1[String, MatchSimpleBody]("match", body) with MatchQueryClause
+case class MatchComplexBody(query: String, operator: Option[String])
+case class MatchComplex(field: String, query: String, operator: Option[String])
+  extends Map.Map1[String, MatchComplexBody](field, MatchComplexBody(query, operator))
+  with MatchQueryClause
 
 trait TermQueryLike extends Query
 trait TermQueryClause
@@ -32,6 +34,8 @@ case class TermsSimple(field: String, terms: Seq[String]) extends Map.Map1[Strin
 case class TermsQueryBody(field: String, terms: Seq[String]) extends Map.Map1[String, Seq[String]](field, terms) with TermQueryClause
 case class TermsComplex(body: TermsQueryBody) extends Map.Map1[String, TermsQueryBody]("terms", body) with TermQueryLike
 
+case class RangeQuery[T: Numeric](clause: RangeQueryClause[T]) extends Map.Map1[String, RangeQueryClause[T]]("range", clause) with Query
+case class RangeQueryClause[T : Numeric](gt: Option[T] = None, gte: Option[T] = None, lt: Option[T] = None, lte: Option[T] = None)
 
 trait CompoundQuery[T] extends Query with Map[String, T]
 

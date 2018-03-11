@@ -21,7 +21,7 @@ initialCommands :=
     |import com.chrisbenincasa.scelastic._
     |import com.chrisbenincasa.scelastic.queries._
     |import com.chrisbenincasa.scelastic.params._
-    |import com.chrisbenincasa.json.jackson._
+    |import com.curalate.json.jackson._
     |val serializer = new JacksonSerializer()
   """.stripMargin
 

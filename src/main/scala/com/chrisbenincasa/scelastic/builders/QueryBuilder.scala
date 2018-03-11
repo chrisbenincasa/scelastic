@@ -1,9 +1,10 @@
-package com.chrisbenincasa.scelastic
+package com.chrisbenincasa.scelastic.builders
 
 import com.chrisbenincasa.scelastic.params.{CompoundQueryParam, LeafQueryParam}
 import com.chrisbenincasa.scelastic.queries._
+import com.chrisbenincasa.scelastic.{ParameterizedBuilder, Params}
 
-class QueryBuilder private[scelastic] (val params: Params) extends ParameterizedBuilder[QueryBuilder] {
+class QueryBuilder private[scelastic] (val params: Params) extends ParameterizedBuilder[QueryBuilder, Query] {
   def this() = this(Params.empty)
 
   // Leaf
@@ -14,6 +15,8 @@ class QueryBuilder private[scelastic] (val params: Params) extends Parameterized
   def withBool(boolCompoundQuery: BoolCompoundQuery) = configured(CompoundQueryParam(boolCompoundQuery))
   def withNested(nestedQuery: NestedCompoundQuery) = configured(CompoundQueryParam(nestedQuery))
 
+//  def withAggregations()
+
   def build: Query =
     params.optional[LeafQueryParam].
       orElse(params.optional[CompoundQueryParam]).
@@ -21,10 +24,6 @@ class QueryBuilder private[scelastic] (val params: Params) extends Parameterized
       getOrElse(throw new IllegalStateException("No query configured"))
 
   override protected def copy1(params: Params): QueryBuilder = new QueryBuilder(params)
-}
-
-class NestedQueryBuilder private (params: Params) extends QueryBuilder(params) {
-
 }
 
 object QueryBuilder {

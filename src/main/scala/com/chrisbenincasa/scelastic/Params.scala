@@ -63,7 +63,9 @@ trait Parameterized[+T] {
   def withParams(ps: Params): T
 }
 
-trait ParameterizedBuilder[T] extends Parameterized[T] {
+trait ParameterizedBuilder[T, Builds] extends Parameterized[T] {
+  def build: Builds
+
   override def withParams(ps: Params): T =
     copy1(params = ps)
 
