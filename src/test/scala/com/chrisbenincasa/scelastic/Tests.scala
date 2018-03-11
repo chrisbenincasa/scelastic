@@ -2,13 +2,13 @@ package com.chrisbenincasa.scelastic
 
 import com.chrisbenincasa.scelastic.builders.{QueryBuilder, SearchBuilder}
 import com.chrisbenincasa.scelastic.queries._
-import com.curalate.json.jackson._
+import io.paradoxical.jackson.JacksonSerializer
 import org.scalatest._
 
 class Tests extends FlatSpec with Matchers {
   "A test" should "run" in {
 
-    val serializer = new JacksonSerializer()
+    val serializer = JacksonSerializer.default
 
     val avg = AverageAggregation(AverageAggregationBody("Age"))
     val stats = StatsAggregation("Age")
@@ -32,6 +32,6 @@ class Tests extends FlatSpec with Matchers {
       withSize(0).
       build
 
-    println(serializer.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(search))
+    println(serializer.writerWithDefaultPrettyPrinter().writeValueAsString(search))
   }
 }

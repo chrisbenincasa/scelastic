@@ -15,18 +15,18 @@ case object MatchNoneQuery extends Map.Map1[String, EmptyObject]("match_none", E
 // 2. Map1 is concrete, so we don't have to provide any implementations
 trait MatchQueryClause
 case class MatchQuery(`match`: MatchQueryClause) extends MatchQueryLike
-case class MatchSimple(field: String, value: String) extends Map.Map1[String, String](field, value) with MatchQueryClause
-case class MatchComplexBody(query: String, operator: Option[String])
-case class MatchComplex(field: String, query: String, operator: Option[String])
-  extends Map.Map1[String, MatchComplexBody](field, MatchComplexBody(query, operator))
+case class MatchSimple[T](field: String, value: T) extends Map.Map1[String, T](field, value) with MatchQueryClause
+case class MatchComplexBody[T](query: T, operator: Option[String])
+case class MatchComplex[T](field: String, query: T, operator: Option[String])
+  extends Map.Map1[String, MatchComplexBody[T]](field, MatchComplexBody(query, operator))
   with MatchQueryClause
 
 trait TermQueryLike extends Query
 trait TermQueryClause
 case class TermQuery(term: TermQueryClause) extends TermQueryLike
-case class TermSimple(field: String, value: String) extends Map.Map1[String, String](field, value) with TermQueryClause
-case class TermQueryBody(value: String, boost: Double)
-case class TermComplex(body: TermQueryBody) extends Map.Map1[String, TermQueryBody]("term", body) with TermQueryClause
+case class TermSimple[T](field: String, value: T) extends Map.Map1[String, T](field, value) with TermQueryClause
+case class TermQueryBody[T](value: T, boost: Double)
+case class TermComplex[T](body: TermQueryBody[T]) extends Map.Map1[String, TermQueryBody[T]]("term", body) with TermQueryClause
 
 trait TermsQueryClause
 case class TermsQuery(terms: TermsQueryClause) extends Query
