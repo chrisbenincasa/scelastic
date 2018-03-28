@@ -1,6 +1,7 @@
-package com.chrisbenincasa.scelastic.queries
+package com.chrisbenincasa.scelastic.builders
 
 import com.chrisbenincasa.scelastic.params.CompoundQueryParam
+import com.chrisbenincasa.scelastic.queries.{BoolCompoundQuery, Query}
 import com.chrisbenincasa.scelastic.{ParameterizedBuilder, Params}
 
 class BoolQueryBuilder private (val params: Params) extends ParameterizedBuilder[BoolQueryBuilder, BoolCompoundQuery] {

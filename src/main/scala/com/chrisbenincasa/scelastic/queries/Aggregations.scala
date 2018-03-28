@@ -1,6 +1,6 @@
 package com.chrisbenincasa.scelastic.queries
 
-case class AggregationQuery(aggs: (String, Aggregation)*) extends Map[String, Aggregation] {
+case class AggregationQuery(aggs: (String, Aggregation)*) extends Map[String, Aggregation] with Query {
   private val underlying = Map(aggs: _*)
   override def +[V1 >: Aggregation](kv: (String, V1)): Map[String, V1] = underlying + kv
   override def -(key: String): Map[String, Aggregation] = underlying - key

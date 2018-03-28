@@ -1,5 +1,7 @@
 package com.chrisbenincasa.scelastic.queries
 
+import com.chrisbenincasa.scelastic.builders.BoolQueryStruct
+
 trait Query
 case class EmptyObject private (x: Option[Int] = None)
 object EmptyObject {

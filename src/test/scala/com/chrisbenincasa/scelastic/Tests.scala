@@ -1,6 +1,6 @@
 package com.chrisbenincasa.scelastic
 
-import com.chrisbenincasa.scelastic.builders.{QueryBuilder, SearchBuilder}
+import com.chrisbenincasa.scelastic.builders.{BoolQueryBuilder, QueryBuilder, SearchBuilder}
 import com.chrisbenincasa.scelastic.queries._
 import io.paradoxical.jackson.JacksonSerializer
 import org.scalatest._
