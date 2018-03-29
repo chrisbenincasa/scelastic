@@ -3,8 +3,7 @@ package com.chrisbenincasa.scelastic
 import com.chrisbenincasa.scelastic.ast._
 import com.chrisbenincasa.scelastic.builders.{BoolQueryBuilder, QueryBuilder, SearchBuilder}
 import com.chrisbenincasa.scelastic.dsl._
-import com.chrisbenincasa.scelastic.queries.{Query => ESQuery}
-import com.chrisbenincasa.scelastic.queries.{MatchAllQuery, MatchNoneQuery}
+import com.chrisbenincasa.scelastic.queries.{AggregationQuery, MatchAllQuery, MatchNoneQuery, Query => ESQuery}
 import io.paradoxical.jackson.JacksonSerializer
 import org.scalatest.FlatSpec
 
@@ -20,13 +19,12 @@ import com.chrisbenincasa.scelastic.Dsl._
 class MacroTests extends FlatSpec {
   val serializer = JacksonSerializer.default
 
+  //_.term(_.Age == 3, TermOption.boost(1.0f))
   val q = quote {
     search[Document].
       bool(
-//        _.must.`match`(d => d.Address == "123")
-        _.filter.term.query(_.Age == 3).boost(1.0f)
-//        _.filter.term(_.Age == 3),
-//        _.filter.range(_.Age)(_ >= 3)
+        _.filter.term(_.Age == 3).boost(1.0f)
+//        _.filter(_.term(_.Age == 3, TermOption.boost(1.0f)))
       )
   }
 
@@ -37,7 +35,25 @@ class MacroTests extends FlatSpec {
 //  println(serializer.writerWithDefaultPrettyPrinter().writeValueAsString(j))
 }
 
+case class FlattenESQuery(
+  queries: List[ESQuery] = Nil,
+  aggregations: List[AggregationQuery] = Nil,
+  size: Option[Ast] = None,
+  from: Option[Ast] = None,
+)
+
 object ESJsonTranslator {
+  def flatten(ast: Ast): FlattenESQuery = {
+    ast match {
+      case Bool(q, Ident(alias), body) =>
+        body match {
+          case BoolFilter(q1, body1) => FlattenESQuery()
+          case _ => ???
+        }
+      case _ => ???
+    }
+  }
+
 //  def apply(query: Ast) = {
 //    val q: ESQuery = query match {
 //      case q: Query => q match {

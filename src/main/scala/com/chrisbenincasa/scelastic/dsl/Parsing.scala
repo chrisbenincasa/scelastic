@@ -27,6 +27,7 @@ trait Parsing {
     case `operationParser`(v) => v
     case `quotedAstParser`(v) => v
     case `boolQueryParser`(v) => v
+    case `termOptionParser`(v) => v
     case `identParser`(v) => v
     case `equalityOperationParser`(v) => v
     case `blockParser`(v) => v
@@ -59,8 +60,13 @@ trait Parsing {
     case q"$source.must.`match`({($alias) => $body})" if source.tpe <:< typeTag[Dsl#BoolSearch[Any]].tpe =>
       BoolMust(identParser(source), astParser(body))
 
-    case q"$source.filter.term.query[$t]({($alias) => $body}).boost(${_ : Tree})" if is[Dsl#BoolSearch[Any]](source) =>
-      BoolFilter(identParser(source), astParser(body))
+    case q"$source.term({($alias) => $body})" if is[Dsl#FilterContext[Any]](source) =>
+      TermQuery(astParser(source), identParser(alias), astParser(body))
+  }
+
+  val termOptionParser: Parser[Ast] = Parser[Ast] {
+    case q"$source.boost($value)" if is[Dsl#TermNode[Any]](source) =>
+      TermQueryOption.boost(astParser(source), astParser(value))
   }
 
   val operationParser: Parser[Operation] = Parser[Operation] {

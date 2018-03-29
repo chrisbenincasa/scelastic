@@ -13,7 +13,6 @@ trait SearchDsl {
   sealed trait Search[+T] {
     def map[R](f: T => R): Search[R]
 
-//    def bool[R](f: BoolSearch[T] => BoolSearch[R]): BoolSearch[R]
     def bool[R](f: (BoolSearchNode[T] => Search[R])*): Search[R]
 
     def drop(n: Int): Search[T]
@@ -29,8 +28,6 @@ trait SearchDsl {
   sealed trait BoolSearchNode[+T] extends BoolSearch[T] {
     def must: MustContext[T]
     def filter: FilterContext[T]
-    //    def must_not
-    //    def should
   }
 
   sealed trait SearchContext[T]
@@ -43,8 +40,7 @@ trait SearchDsl {
 
   sealed trait FilterContext[+T] extends BoolSearch[T] {
     def `match`(q: T => Boolean): FilterContext[T]
-    def term(q: T => Boolean): Search[T]
-    def term: TermNode[T]
+    def term(q: T => Boolean): TermNode[T]
 
     def range[R](f: T => R)(ranges: (R => Boolean)*): Search[T]
   }

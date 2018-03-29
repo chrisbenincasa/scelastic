@@ -13,6 +13,7 @@ trait Unliftables {
     case boolUnliftable(ast) => ast
     case identUnliftable(ast) => ast
     case valueUnliftable(ast) => ast
+    case optionParamUnliftable(ast) => ast
     case q"$pack.Property.apply(${ a: Ast }, ${ b: String })" => Property(a, b)
     case q"$pack.BinaryOperation.apply(${ a: Ast }, ${ b: BinaryOperator }, ${ c: Ast })" => BinaryOperation(a, b, c)
   }
@@ -23,10 +24,16 @@ trait Unliftables {
     case q"$pack.MatchNone" => MatchNone
   }
 
+  implicit def listUnliftable[T](implicit u: Unliftable[T]): Unliftable[List[T]] = Unliftable[List[T]] {
+    case q"$pack.Nil"                         => Nil
+    case q"$pack.List.apply[..$t](..$values)" => values.map(v => u.unapply(v).getOrElse(c.abort(c.enclosingPosition, s"Can't unlift $v")))
+  }
+
   implicit val boolUnliftable: Unliftable[Query] = Unliftable[Query] {
     case q"$pack.Bool(${a: Ast}, ${b: Ast}, ${c: Ast})" => Bool(a, b, c)
     case q"$pack.BoolMust(${a: Ast}, ${b: Ast})" => BoolMust(a, b)
     case q"$pack.BoolFilter(${a: Ast}, ${b: Ast})" => BoolFilter(a, b)
+    case q"$pack.TermQuery(${a: Ast}, ${b: Ast}, ${c: Ast})" => TermQuery(a, b, c)
   }
 
   implicit val binaryOperatorUnliftable: Unliftable[BinaryOperator] = Unliftable[BinaryOperator] {
@@ -38,6 +45,10 @@ trait Unliftables {
     case q"$pack.RangeOperator.`<`"           => RangeOperator.`<`
   }
 
+  implicit val optionParamUnliftable: Unliftable[OptionParam] = Unliftable[OptionParam] {
+    case q"$pack.TermQueryOption.boost.apply(${query: Ast}, ${value: Ast})" => TermQueryOption.boost(query, value)
+  }
+
   implicit val identUnliftable: Unliftable[Ident] = Unliftable[Ident] {
     case q"$pack.Ident.apply(${ a: String })" => Ident(a)
   }
@@ -45,5 +56,6 @@ trait Unliftables {
   implicit val valueUnliftable: Unliftable[Value] = Unliftable[Value] {
     case q"$pack.NullValue" => NullValue
     case q"$pack.Constant.apply(${Literal(c.universe.Constant(a))})" => Constant(a)
+    case q"$pack.Tuple.apply(${a : List[Ast]})" => Tuple(a)
   }
 }

@@ -12,6 +12,7 @@ trait LiftableInstances {
 
   implicit val astLiftable: Liftable[Ast] = Liftable[Ast] {
     case ast: Query => queryLiftable(ast)
+    case ast: OptionParam => optionParamLiftable(ast)
     case ast: Ident => identLiftable(ast)
     case ast: Value => valueLiftable(ast)
     case Property(a, b) => q"$pack.Property($a, $b)"
@@ -27,6 +28,7 @@ trait LiftableInstances {
     case Bool(a, b, c) => q"$pack.Bool($a, $b, $c)"
     case BoolMust(a, b) => q"$pack.BoolMust($a, $b)"
     case BoolFilter(a, b) => q"$pack.BoolFilter($a, $b)"
+    case TermQuery(a, b, c) => q"$pack.TermQuery($a, $b, $c)"
   }
 
   implicit val binaryOperatorLiftable: Liftable[BinaryOperator] = Liftable[BinaryOperator] {
@@ -38,6 +40,10 @@ trait LiftableInstances {
     case RangeOperator.`<`           => q"$pack.RangeOperator.`<`"
   }
 
+  implicit val optionParamLiftable: Liftable[OptionParam] = Liftable[OptionParam] {
+    case TermQueryOption.boost(source, value) => q"$pack.TermQueryOption.boost($source, $value)"
+  }
+
   implicit val identLiftable: Liftable[Ident] = Liftable[Ident] {
     case Ident(a) => q"$pack.Ident($a)"
   }
@@ -45,5 +51,6 @@ trait LiftableInstances {
   implicit val valueLiftable: Liftable[Value] = Liftable[Value] {
     case NullValue => q"$pack.NullValue"
     case Constant(a) => q"$pack.Constant(${Literal(c.universe.Constant(a))})"
+    case Tuple(a) => q"$pack.Tuple($a)"
   }
 }

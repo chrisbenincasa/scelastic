@@ -5,12 +5,13 @@ import org.scalatest.FlatSpec
 
 case class Person(name: String, age: Int)
 class QuillTests extends FlatSpec {
-  object testContext extends MirrorContext(MirrorIdiom, Literal)
-  import testContext._
+  val ctx = new SqlMirrorContext(MirrorSqlDialect, Literal)
+  import ctx._
 
   val m = quote {
-    query[Person].map(_.age).filter(_ >= 10).map(_ + 1)
+    query[Person].filter(_.age >= 10).map(_.age).filter(_ >= 10).take(10)
   }
 
   println(m.ast)
+  println(ctx.run(m).string)
 }

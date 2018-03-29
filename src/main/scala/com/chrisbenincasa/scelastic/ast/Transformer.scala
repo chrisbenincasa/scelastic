@@ -26,9 +26,19 @@ trait StatefulTransformer[T] {
         val (at, att) = apply(a)(_.apply)
         (Block(at), att)
 
+      case Val(a, b) =>
+        val (at, att) = apply(b)
+        (Val(a, at), att)
+
       case QuotedReference(a, b) =>
         val (bt, btt) = apply(b)
         (QuotedReference(a, bt), btt)
+
+      // Stick this into a different transformer
+      case TermQueryOption.boost(a, b) =>
+        val (at, att) = apply(a)
+        val (bt, btt) = att.apply(b)
+        TermQueryOption.boost(at, bt) -> btt
     }
   }
 
@@ -49,8 +59,24 @@ trait StatefulTransformer[T] {
         val (at, att) = apply(a)
         val (bt, btt) = att.apply(b)
         BoolFilter(at, bt) -> btt
+      case TermQuery(a, b, c) =>
+        val (at, att) = apply(a)
+        val (ct, ctt) = att.apply(c)
+        TermQuery(at, b, ct) -> ctt
     }
   }
+
+  def apply(e: Operation): (Operation, StatefulTransformer[T]) =
+    e match {
+      case BinaryOperation(a, b, c) =>
+        val (at, att) = apply(a)
+        val (ct, ctt) = att.apply(c)
+        (BinaryOperation(at, b, ct), ctt)
+      case FunctionApply(a, b) =>
+        val (at, att) = apply(a)
+        val (bt, btt) = att.apply(b)(_.apply)
+        (FunctionApply(at, bt), btt)
+    }
 
   def apply[U, R](list: List[U])(f: StatefulTransformer[T] => U => (R, StatefulTransformer[T])) =
     list.foldLeft((List.empty[R], this)) {
@@ -65,7 +91,7 @@ class CollectAst[T](p: PartialFunction[Ast, T], val state: List[T])
 
   override def apply(a: Ast) =
     a match {
-      case d if (p.isDefinedAt(d)) => (d, new CollectAst(p, state :+ p(d)))
+      case d if p.isDefinedAt(d) => (d, new CollectAst(p, state :+ p(d)))
       case other                   => super.apply(other)
     }
 }
@@ -78,7 +104,7 @@ object CollectAst {
     }
 
   def apply[T](a: Ast)(p: PartialFunction[Ast, T]) =
-    (new CollectAst(p, List()).apply(a)) match {
+    new CollectAst(p, List()).apply(a) match {
       case (_, transformer) =>
         transformer.state
     }
