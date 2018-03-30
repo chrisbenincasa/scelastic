@@ -15,7 +15,9 @@ trait Traversal {
       case Val(a, b) => Val(a, apply(b))
       case e: QuotedReference => e
         // Move ethis
-      case TermQueryOption.boost(a, b) => TermQueryOption.boost(apply(a), apply(b))
+//      case OptionParam((x, a)) => x.copy1(apply(a))
+      case TermQueryOption.boost(a) => TermQueryOption.boost(apply(a))
+      case TermQueryOption.operator(a) => TermQueryOption.operator(apply(a))
     }
   }
 
@@ -24,10 +26,11 @@ trait Traversal {
       case e: Entity => e
       case MatchAll => MatchAll
       case MatchNone => MatchNone
-      case Bool(a, b, c) => Bool(apply(a), b, apply(c))
-      case BoolMust(a, b) => BoolMust(apply(a), apply(b))
-      case BoolFilter(a, b) => BoolFilter(apply(a), apply(b))
-      case TermQuery(a, b, c) => TermQuery(apply(a), b, apply(c))
+      case Bool(a, b, c) => Bool(apply(a), b, c.map(apply))
+      case BoolMust(a) => BoolMust(apply(a))
+      case BoolFilter(a) => BoolFilter(apply(a))
+      case MatchQuery(a, b, c, d) => MatchQuery(apply(a), b, apply(c), d.map(apply))
+      case TermQuery(a, b, c, d) => TermQuery(apply(a), b, apply(c), d.map(apply))
     }
   }
 

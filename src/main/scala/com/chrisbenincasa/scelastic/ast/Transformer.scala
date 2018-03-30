@@ -35,10 +35,16 @@ trait StatefulTransformer[T] {
         (QuotedReference(a, bt), btt)
 
       // Stick this into a different transformer
-      case TermQueryOption.boost(a, b) =>
+//      case OptionParam((x, a)) =>
+//        val (at, att) = apply(a)
+//        x.copy1(at) -> att
+      case TermQueryOption.boost(a) =>
         val (at, att) = apply(a)
-        val (bt, btt) = att.apply(b)
-        TermQueryOption.boost(at, bt) -> btt
+        (TermQueryOption.boost(at), att)
+
+      case TermQueryOption.operator(a) =>
+        val (at, att) = apply(a)
+        (TermQueryOption.boost(at), att)
     }
   }
 
@@ -49,20 +55,24 @@ trait StatefulTransformer[T] {
       case MatchNone => MatchNone -> this
       case Bool(a, b, c) =>
         val (at, att) = apply(a)
-        val (ct, ctt) = att.apply(c)
+        val (ct, ctt) = att.apply(c)(_.apply)
         Bool(at, b, ct) -> ctt
-      case BoolMust(a, b) =>
+      case BoolMust(a) =>
         val (at, att) = apply(a)
-        val (bt, btt) = att.apply(b)
-        BoolMust(at, bt) -> btt
-      case BoolFilter(a, b) =>
+        BoolMust(at) -> att
+      case BoolFilter(a) =>
         val (at, att) = apply(a)
-        val (bt, btt) = att.apply(b)
-        BoolFilter(at, bt) -> btt
-      case TermQuery(a, b, c) =>
+        BoolFilter(at) -> att
+      case TermQuery(a, b, c, d) =>
         val (at, att) = apply(a)
         val (ct, ctt) = att.apply(c)
-        TermQuery(at, b, ct) -> ctt
+        val (dt, dtt) = ctt.apply(d)(_.apply)
+        TermQuery(at, b, ct, dt) -> dtt
+      case MatchQuery(a, b, c, d) =>
+        val (at, att) = apply(a)
+        val (ct, ctt) = att.apply(c)
+        val (dt, dtt) = ctt.apply(d)(_.apply)
+        MatchQuery(at, b, ct, dt) -> dtt
     }
   }
 

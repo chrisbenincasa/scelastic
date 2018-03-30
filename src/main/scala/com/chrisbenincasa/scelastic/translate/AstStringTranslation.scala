@@ -23,9 +23,12 @@ class AstStringTranslation {
     case MatchAll => tokens"match_all"
     case MatchNone => tokens"match_none"
     case Bool(query, alias, body) => tokens"${query.translate}.bool(${alias.translate} => ${body.translate})"
-    case BoolMust(query, body) => tokens"${query.translate}.must${body.translate}"
-    case BoolFilter(query, body) => tokens"${query.translate}(${body.translate})"
-    case TermQuery(query, alias, body) => tokens"${query.translate}.term((${alias.translate}) => ${body.translate})"
+    case BoolMust(query) => tokens"${query.translate}.must"
+    case BoolFilter(query) => tokens"${query.translate}.filter"
+    case MatchQuery(query, alias, body, opts) =>
+      tokens"${query.translate}.`match`((${alias.translate}) => ${body.translate}${if (opts.nonEmpty) tokens", ${opts.translate}" else tokens""})"
+    case TermQuery(query, alias, body, opts) =>
+      tokens"${query.translate}.term((${alias.translate}) => ${body.translate}${if (opts.nonEmpty) tokens", ${opts.translate}" else tokens""})"
   }
 
   implicit val dynamicTranslator: Translator[Dynamic] = Translator[Dynamic] {
@@ -54,7 +57,8 @@ class AstStringTranslation {
   }
 
   implicit val optionParamTranslator: Translator[OptionParam] = Translator[OptionParam] {
-    case TermQueryOption.boost(query, value) => tokens"${query.translate}.boost(${value.translate})"
+    case TermQueryOption.boost(value) => tokens"boost(${value.translate})"
+    case TermQueryOption.operator(value) => tokens"operator(${value.translate})"
   }
 
   implicit def operatorTranslator[T <: Operator]: Translator[T] = Translator[T] {

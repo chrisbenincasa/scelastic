@@ -1,10 +1,13 @@
 package com.chrisbenincasa.scelastic.ast
 
+import com.chrisbenincasa.scelastic.params.QueryParam
 import com.chrisbenincasa.scelastic.translate.AstStringTranslation
 
 sealed trait Ast {
   override def toString: String = {
-    AstStringTranslation.astToStringTranslator.translate(this).toString
+    import AstStringTranslation._
+    import com.chrisbenincasa.scelastic.translate.TranslatorImplicits._
+    this.translate.toString
   }
 }
 
@@ -29,16 +32,33 @@ case class QuotedReference(tree: Any, ast: Ast) extends Ast
 case object MatchAll extends Query
 case object MatchNone extends Query
 
-case class Bool(query: Ast, alias: Ast, body: Ast) extends Query
-case class BoolMust(query: Ast, body: Ast) extends Query
-case class BoolFilter(query: Ast, body: Ast) extends Query
+case class Bool(query: Ast, alias: Ast, clauses: List[Ast]) extends Query
+case class BoolMust(query: Ast) extends Query
+case class BoolFilter(query: Ast) extends Query
 
-case class TermQuery(query: Ast, alias: Ast, body: Ast) extends Query
+case class MatchQuery(query: Ast, alias: Ast, body: Ast, options: List[Ast] = Nil) extends Query
+case class TermQuery(query: Ast, alias: Ast, body: Ast, options: List[Ast] = Nil) extends Query
 
-sealed trait OptionParam extends Ast
+sealed trait OptionParam extends Ast {
+  def copy1(value: Ast): OptionParam
+}
+object OptionParam {
+  import TermQueryOption._
+  def unapply(arg: Ast): Option[(OptionParam, Ast)] = arg match {
+    case a: boost => Some(a -> a.value)
+    case a: operator => Some(a -> a.value)
+    case _ => None
+  }
+}
+
 sealed trait TermQueryOption extends OptionParam
 object TermQueryOption {
-  case class boost(query: Ast, value: Ast) extends TermQueryOption
+  case class boost(value: Ast) extends TermQueryOption {
+    override def copy1(value: Ast): boost = this.copy(value)
+  }
+  case class operator(value: Ast) extends OptionParam {
+    override def copy1(value: Ast): operator = this.copy(value)
+  }
 }
 
 sealed trait Operation extends Ast
@@ -61,4 +81,8 @@ object RangeOperator {
 //  case object gt extends BinaryOperator
 //  case object lt extends BinaryOperator
 //  case object lte extends BinaryOperator
+}
+
+object BooleanOperator {
+  case object `&&` extends BinaryOperator
 }

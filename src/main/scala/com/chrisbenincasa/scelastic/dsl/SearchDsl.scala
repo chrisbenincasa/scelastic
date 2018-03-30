@@ -1,5 +1,6 @@
 package com.chrisbenincasa.scelastic.dsl
 
+import com.chrisbenincasa.scelastic.ast.TermQueryOption
 import scala.annotation.compileTimeOnly
 
 trait Dsl extends SearchDsl with QuotedDsl with MetaDsl
@@ -9,6 +10,12 @@ trait SearchDsl {
 
   @compileTimeOnly("bad")
   def searchSchema[T](entity: String, columns: (T => (Any, String))*): IndexSearch[T] = throw new RuntimeException
+
+  @compileTimeOnly("bad")
+  def boost(value: Float): QueryOption = throw new RuntimeException
+
+  @compileTimeOnly("bad")
+  def operator(value: String): QueryOption = throw new RuntimeException
 
   sealed trait Search[+T] {
     def map[R](f: T => R): Search[R]
@@ -33,22 +40,32 @@ trait SearchDsl {
   sealed trait SearchContext[T]
 
   sealed trait MustContext[+T] extends BoolSearch[T] {
-    def `match`(q: T => Boolean): BoolSearch[T]
+    def `match`(q: T => Boolean, options: QueryOption*): BoolSearch[T]
     def match_all: BoolSearch[T]
     def match_none: BoolSearch[T]
+
+    def term(q: T => Boolean, options: QueryOption*): TermNode[T]
   }
 
   sealed trait FilterContext[+T] extends BoolSearch[T] {
-    def `match`(q: T => Boolean): FilterContext[T]
-    def term(q: T => Boolean): TermNode[T]
-
+    def `match`(q: T => Boolean, options: QueryOption*): FilterContext[T]
+    def term(q: T => Boolean, options: QueryOption*): TermNode[T]
     def range[R](f: T => R)(ranges: (R => Boolean)*): Search[T]
+  }
+
+  sealed trait MatchNode[+T] extends Search[T] {
+    def query(f: T => Boolean): MatchNode[T]
   }
 
   sealed trait TermNode[+T] extends Search[T] {
     def query[R](f: T => Boolean): TermNode[T]
     def boost(f: Float): TermNode[T]
+    def term(f: T => Boolean): TermNode[T]
   }
+
+  sealed trait QueryOption
+  sealed trait TermQueryOption extends QueryOption
+
 }
 
 

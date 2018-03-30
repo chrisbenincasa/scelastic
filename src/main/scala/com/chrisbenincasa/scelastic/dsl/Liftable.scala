@@ -26,9 +26,10 @@ trait LiftableInstances {
     case MatchAll => q"$pack.MatchAll"
     case MatchNone => q"$pack.MatchNone"
     case Bool(a, b, c) => q"$pack.Bool($a, $b, $c)"
-    case BoolMust(a, b) => q"$pack.BoolMust($a, $b)"
-    case BoolFilter(a, b) => q"$pack.BoolFilter($a, $b)"
-    case TermQuery(a, b, c) => q"$pack.TermQuery($a, $b, $c)"
+    case BoolMust(a) => q"$pack.BoolMust($a)"
+    case BoolFilter(a) => q"$pack.BoolFilter($a)"
+    case MatchQuery(a, b, c, d) => q"$pack.MatchQuery($a, $b, $c, $d)"
+    case TermQuery(a, b, c, d) => q"$pack.TermQuery($a, $b, $c, $d)"
   }
 
   implicit val binaryOperatorLiftable: Liftable[BinaryOperator] = Liftable[BinaryOperator] {
@@ -38,10 +39,12 @@ trait LiftableInstances {
     case RangeOperator.`>`           => q"$pack.RangeOperator.`>`"
     case RangeOperator.`<=`          => q"$pack.RangeOperator.`<=`"
     case RangeOperator.`<`           => q"$pack.RangeOperator.`<`"
+    case BooleanOperator.`&&`        => q"$pack.BooleanOperator.`&&`"
   }
 
   implicit val optionParamLiftable: Liftable[OptionParam] = Liftable[OptionParam] {
-    case TermQueryOption.boost(source, value) => q"$pack.TermQueryOption.boost($source, $value)"
+    case TermQueryOption.boost(value) => q"$pack.TermQueryOption.boost($value)"
+    case TermQueryOption.operator(value) => q"$pack.TermQueryOption.operator($value)"
   }
 
   implicit val identLiftable: Liftable[Ident] = Liftable[Ident] {

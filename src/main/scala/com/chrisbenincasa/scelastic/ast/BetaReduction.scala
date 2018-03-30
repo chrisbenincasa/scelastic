@@ -62,13 +62,13 @@ case class BetaReduction(refs: Map[Ast, Ast]) extends Traversal {
   override def apply(q: Query): Ast = {
     q match {
       case Bool(a, b, c) =>
-        Bool(apply(a), b, BetaReduction(refs - b)(c))
+        Bool(apply(a), b, c.map(BetaReduction(refs - b)(_)))
 
-      case BoolMust(a, b) =>
-        BoolMust(apply(a), BetaReduction(refs)(b))
+      case BoolMust(a) =>
+        BoolMust(apply(a))
 
-      case BoolFilter(a, b) =>
-        BoolFilter(apply(a), BetaReduction(refs)(b))
+      case BoolFilter(a) =>
+        BoolFilter(apply(a))
 
       case _ =>
         super.apply(q)

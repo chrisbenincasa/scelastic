@@ -1,6 +1,7 @@
 package com.chrisbenincasa.scelastic
 
 import com.chrisbenincasa.scelastic.ast._
+import com.chrisbenincasa.scelastic.ast.normalize.Normalize
 import com.chrisbenincasa.scelastic.builders.{BoolQueryBuilder, QueryBuilder, SearchBuilder}
 import com.chrisbenincasa.scelastic.dsl._
 import com.chrisbenincasa.scelastic.queries.{AggregationQuery, MatchAllQuery, MatchNoneQuery, Query => ESQuery}
@@ -23,12 +24,14 @@ class MacroTests extends FlatSpec {
   val q = quote {
     search[Document].
       bool(
-        _.filter.term(_.Age == 3).boost(1.0f)
-//        _.filter(_.term(_.Age == 3, TermOption.boost(1.0f)))
+        _.filter.term(d => d.Age == 3).term(_.Address == "ASD"),
+        _.must.`match`(_.MaritalStatus == "Married", operator("and"))
       )
   }
 
   println(q.ast)
+  val normal = Normalize(q.ast)
+  println(normal)
 
 //  val j = ESJsonTranslator(q.ast)
 
@@ -43,16 +46,16 @@ case class FlattenESQuery(
 )
 
 object ESJsonTranslator {
-  def flatten(ast: Ast): FlattenESQuery = {
-    ast match {
-      case Bool(q, Ident(alias), body) =>
-        body match {
-          case BoolFilter(q1, body1) => FlattenESQuery()
-          case _ => ???
-        }
-      case _ => ???
-    }
-  }
+//  def flatten(ast: Ast): FlattenESQuery = {
+//    ast match {
+//      case Bool(q, Ident(alias), body) =>
+//        body match {
+//          case BoolFilter(q1, body1) => FlattenESQuery()
+//          case _ => ???
+//        }
+//      case _ => ???
+//    }
+//  }
 
 //  def apply(query: Ast) = {
 //    val q: ESQuery = query match {

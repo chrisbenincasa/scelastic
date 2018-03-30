@@ -1,6 +1,6 @@
 package com.chrisbenincasa.scelastic.dsl
 
-import com.chrisbenincasa.scelastic.ast.Ast
+import com.chrisbenincasa.scelastic.ast.{Ast, BetaReduction}
 import scala.annotation.StaticAnnotation
 import scala.reflect.ClassTag
 import scala.reflect.macros.whitebox
@@ -13,7 +13,7 @@ private[dsl] class QuoteMacro(val c: whitebox.Context) extends Parsing with Lift
   private val quoted = TermName("quoted")
 
   def quote[T](body: Tree)(implicit t: WeakTypeTag[T]) = {
-    val ast = astParser(body)
+    val ast = BetaReduction(astParser(body))
 
     c.untypecheck {
       q"""

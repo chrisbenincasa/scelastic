@@ -46,31 +46,38 @@ trait Parsing {
     case q"$pack.searchSchema[$t](${ name: String })" =>
       Entity(name)
 
-    case q"$source.bool[$t]({($alias) => $body})" if source.tpe <:< typeTag[Dsl#Search[Any]].tpe =>
-      Bool(astParser(source), identParser(alias), astParser(body))
+    case q"$source.bool[$t](..${body : List[Tree]})" if source.tpe <:< typeTag[Dsl#Search[Any]].tpe =>
+      val bodyAsts = body.collect { case q"({($alias) => $inner})" => inner }.map(astParser(_))
+      Bool(astParser(source), Ident("???"), bodyAsts)
   }
 
   val boolQueryParser: Parser[Ast] = Parser[Ast] {
-    case q"$source.must.match_all" if source.tpe <:< typeTag[Dsl#BoolSearch[Any]].tpe =>
-      BoolMust(identParser(source), MatchAll)
+    case q"$source.must" if is[Dsl#BoolSearchNode[Any]](source) =>
+      BoolMust(astParser(source))
 
-    case q"$source.must.match_none" if source.tpe <:< typeTag[Dsl#BoolSearch[Any]].tpe =>
-      BoolMust(identParser(source), MatchNone)
+    case q"$source.filter" if is[Dsl#BoolSearchNode[Any]](source) =>
+      BoolFilter(astParser(source))
 
-    case q"$source.must.`match`({($alias) => $body})" if source.tpe <:< typeTag[Dsl#BoolSearch[Any]].tpe =>
-      BoolMust(identParser(source), astParser(body))
+    case q"$source.`match`({($alias) => $body}, ..${rest : List[Tree]})"
+      if is[Dsl#FilterContext[Any]](source) || is[Dsl#MustContext[Any]](source) || is[Dsl#TermNode[Any]](source) =>
+      MatchQuery(astParser(source), identParser(alias), astParser(body), rest.map(astParser(_)))
 
-    case q"$source.term({($alias) => $body})" if is[Dsl#FilterContext[Any]](source) =>
-      TermQuery(astParser(source), identParser(alias), astParser(body))
+    case q"$source.term({($alias) => $body}, ..${rest : List[Tree]})"
+        if is[Dsl#FilterContext[Any]](source) || is[Dsl#MustContext[Any]](source) || is[Dsl#TermNode[Any]](source) =>
+      TermQuery(astParser(source), identParser(alias), astParser(body), rest.map(astParser(_)))
   }
 
   val termOptionParser: Parser[Ast] = Parser[Ast] {
-    case q"$source.boost($value)" if is[Dsl#TermNode[Any]](source) =>
-      TermQueryOption.boost(astParser(source), astParser(value))
+    case q"$pack.boost($value)" =>
+      TermQueryOption.boost(astParser(value))
+
+    case q"$pack.operator($value)" =>
+      TermQueryOption.operator(astParser(value))
   }
 
   val operationParser: Parser[Operation] = Parser[Operation] {
-    case `equalityOperationParser`(value) => value
+    case `equalityOperationParser`(v) => v
+    case `booleanOperationParser`(v) => v
   }
 
   private def rejectOptions(a: Tree, b: Tree): Unit = {
@@ -92,6 +99,11 @@ trait Parsing {
       checkTypes(a, b)
       rejectOptions(a, b)
       BinaryOperation(astParser(a), EqualityOperator.`!=`, astParser(b))
+  }
+
+  val booleanOperationParser: Parser[Operation] = Parser[Operation] {
+    case q"${a: Tree}.&&(${b: Tree})" if is[Boolean](a) && is[Boolean](b) =>
+      BinaryOperation(astParser(a), BooleanOperator.`&&`, astParser(b))
   }
 
   val quotedAstParser: Parser[Ast] = Parser[Ast] {
