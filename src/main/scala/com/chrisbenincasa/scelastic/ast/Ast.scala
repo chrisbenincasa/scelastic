@@ -34,10 +34,18 @@ case object MatchNone extends Query
 
 case class Bool(query: Ast, alias: Ast, clauses: List[Ast]) extends Query
 case class BoolMust(query: Ast) extends Query
+case class BoolMustNot(query: Ast) extends Query
 case class BoolFilter(query: Ast) extends Query
 
 case class MatchQuery(query: Ast, alias: Ast, body: Ast, options: List[Ast] = Nil) extends Query
 case class TermQuery(query: Ast, alias: Ast, body: Ast, options: List[Ast] = Nil) extends Query
+//case class RangeQuery(query: Ast, alias: Ast, body: Ast)
+case class ExistsQuery(query: Ast, alias: Ast, body: Ast) extends Query
+//case class PrefixQuery(query: Ast, alias: Ast, body: Ast, options: List[Ast] = Nil)
+//case class NestedQuery(source: Ast, path: Ast, query: Ast)
+
+sealed trait Aggregation extends Ast
+
 
 sealed trait OptionParam extends Ast {
   def copy1(value: Ast): OptionParam

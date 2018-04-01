@@ -1,13 +1,14 @@
 package com.chrisbenincasa.scelastic.dsl
 
-import com.chrisbenincasa.scelastic.ast.{Ast, BetaReduction}
+import com.chrisbenincasa.scelastic.ast.{Ast, BetaReduction, IsDynamic}
 import scala.annotation.StaticAnnotation
 import scala.reflect.ClassTag
 import scala.reflect.macros.whitebox
 
 case class QuotedAst(ast: Ast) extends StaticAnnotation
 
-private[dsl] class QuoteMacro(val c: whitebox.Context) extends Parsing with LiftableInstances with Unliftables {
+private[dsl] trait QuoteMacro extends Parsing with LiftableInstances with Unliftables {
+  val c: whitebox.Context
   import c.universe._
 
   private val quoted = TermName("quoted")
@@ -15,12 +16,20 @@ private[dsl] class QuoteMacro(val c: whitebox.Context) extends Parsing with Lift
   def quote[T](body: Tree)(implicit t: WeakTypeTag[T]) = {
     val ast = BetaReduction(astParser(body))
 
-    c.untypecheck {
+    val q = c.untypecheck {
       q"""
          new ${c.prefix}.Quoted[$t] {
+            @${c.weakTypeOf[QuotedAst]}($ast)
+            def $quoted = ast
             override def ast = $ast
          }
        """
+    }
+
+    if (IsDynamic(ast)) {
+      q"$q: ${c.prefix}.Quoted[$t]"
+    } else {
+      q
     }
   }
 

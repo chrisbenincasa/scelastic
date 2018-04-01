@@ -8,34 +8,58 @@ import com.chrisbenincasa.scelastic.queries.{AggregationQuery, MatchAllQuery, Ma
 import io.paradoxical.jackson.JacksonSerializer
 import org.scalatest.FlatSpec
 
+case class DoubleNestedDoc(
+  deep: Boolean
+)
+
+case class NestedDocument(
+  status: String,
+  nested2: DoubleNestedDoc
+)
+
 case class Document(
   Address: String,
   MaritalStatus: String,
-  Age: Int
+  Age: Int,
+  Nested: NestedDocument
 )
 
 object Dsl extends Dsl
-import com.chrisbenincasa.scelastic.Dsl._
+import Dsl._
 
 class MacroTests extends FlatSpec {
   val serializer = JacksonSerializer.default
 
-  //_.term(_.Age == 3, TermOption.boost(1.0f))
-  val q = quote {
+  val v = quote(1)
+//  val q = quote {
+//    search[Document].
+//      bool(
+//        _.filter.term(d => d.Age >= v).term(_.Address == "ASD"),
+//        _.must.`match`(_.MaritalStatus == "Married", operator("and"))
+//      )
+//  }
+
+  def theSearch(i: Int) = quote {
     search[Document].
       bool(
-        _.filter.term(d => d.Age == 3).term(_.Address == "ASD"),
-        _.must.`match`(_.MaritalStatus == "Married", operator("and"))
+        _.filter.term(d => d.Age >= i).term(_.Address == "ASD"),
+        _.must.`match`(_.MaritalStatus == "Married", operator("and")),
+        _.must_not.exists(_.Nested.nested2.deep)
       )
   }
 
-  println(q.ast)
-  val normal = Normalize(q.ast)
-  println(normal)
+  val q = theSearch(10)
+  PrintAst(q.ast)
+//  val normal = Normalize(q.ast)
+//  println(normal)
 
 //  val j = ESJsonTranslator(q.ast)
 
 //  println(serializer.writerWithDefaultPrettyPrinter().writeValueAsString(j))
+}
+
+case object PrintAst extends AstWalk {
+  override val onNode: Ast => Unit = println(_)
 }
 
 case class FlattenESQuery(

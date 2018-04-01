@@ -32,11 +32,13 @@ trait Unliftables {
   implicit val boolUnliftable: Unliftable[Query] = Unliftable[Query] {
     case q"$pack.Bool(${a: Ast}, ${b: Ast}, ${c: List[Ast]})" => Bool(a, b, c)
     case q"$pack.BoolMust(${a: Ast})" => BoolMust(a)
+    case q"$pack.BoolMustNot(${a: Ast})" => BoolMustNot(a)
     case q"$pack.BoolFilter(${a: Ast})" => BoolFilter(a)
     case q"$pack.MatchQuery(${a: Ast}, ${b: Ast}, ${c: Ast})" => MatchQuery(a, b, c)
     case q"$pack.MatchQuery(${a: Ast}, ${b: Ast}, ${c: Ast}, ${d: List[Ast]})" => MatchQuery(a, b, c, d)
     case q"$pack.TermQuery(${a: Ast}, ${b: Ast}, ${c: Ast})" => TermQuery(a, b, c)
     case q"$pack.TermQuery(${a: Ast}, ${b: Ast}, ${c: Ast}, ${d: List[Ast]})" => TermQuery(a, b, c, d)
+    case q"$pack.ExistsQuery(${a: Ast}, ${b: Ast}, ${c: Ast})" => ExistsQuery(a, b, c)
   }
 
   implicit val binaryOperatorUnliftable: Unliftable[BinaryOperator] = Unliftable[BinaryOperator] {

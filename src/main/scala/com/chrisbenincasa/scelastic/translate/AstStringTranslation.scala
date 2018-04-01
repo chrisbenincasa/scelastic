@@ -22,13 +22,17 @@ class AstStringTranslation {
     case Entity(name) => tokens"searchSchema(${s""""$name"""".translate})"
     case MatchAll => tokens"match_all"
     case MatchNone => tokens"match_none"
-    case Bool(query, alias, body) => tokens"${query.translate}.bool(${alias.translate} => ${body.translate})"
+    case Bool(query, alias, body) =>
+      tokens"${query.translate}.bool(${body.map(b => tokens"${alias.translate} => ${b.translate}").translate})"
     case BoolMust(query) => tokens"${query.translate}.must"
+    case BoolMustNot(query) => tokens"${query.translate}.must_not"
     case BoolFilter(query) => tokens"${query.translate}.filter"
     case MatchQuery(query, alias, body, opts) =>
       tokens"${query.translate}.`match`((${alias.translate}) => ${body.translate}${if (opts.nonEmpty) tokens", ${opts.translate}" else tokens""})"
     case TermQuery(query, alias, body, opts) =>
       tokens"${query.translate}.term((${alias.translate}) => ${body.translate}${if (opts.nonEmpty) tokens", ${opts.translate}" else tokens""})"
+    case ExistsQuery(query, alias, body) =>
+      tokens"${query.translate}.exists((${alias.translate}) => ${body.translate}"
   }
 
   implicit val dynamicTranslator: Translator[Dynamic] = Translator[Dynamic] {
@@ -81,7 +85,7 @@ class AstStringTranslation {
     ast match {
       case _: Function        => tokens"(${ast.translate})"
       case _: BinaryOperation => tokens"(${ast.translate})"
-      case other              => ast.translate
+      case _                  => ast.translate
     }
 }
 

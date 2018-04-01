@@ -17,6 +17,7 @@ trait Parsing {
     }
 
     def unapply(arg: Tree): Option[T] = {
+//      println(s"Parsing tree: $arg")
       p.lift(arg)
     }
   }
@@ -24,6 +25,7 @@ trait Parsing {
   val astParser: Parser[Ast] = Parser[Ast] {
     case q"${t: Tree}: ${_ : Tree}" => astParser(t)
     case `queryParser`(v) => v
+    case `valueParser`(v) => v
     case `operationParser`(v) => v
     case `quotedAstParser`(v) => v
     case `boolQueryParser`(v) => v
@@ -31,7 +33,6 @@ trait Parsing {
     case `identParser`(v) => v
     case `equalityOperationParser`(v) => v
     case `blockParser`(v) => v
-    case `valueParser`(v) => v
     case `propertyParser`(v) => v
   }
 
@@ -55,6 +56,9 @@ trait Parsing {
     case q"$source.must" if is[Dsl#BoolSearchNode[Any]](source) =>
       BoolMust(astParser(source))
 
+    case q"$source.must_not" if is[Dsl#BoolSearchNode[Any]](source) =>
+      BoolMustNot(astParser(source))
+
     case q"$source.filter" if is[Dsl#BoolSearchNode[Any]](source) =>
       BoolFilter(astParser(source))
 
@@ -65,6 +69,10 @@ trait Parsing {
     case q"$source.term({($alias) => $body}, ..${rest : List[Tree]})"
         if is[Dsl#FilterContext[Any]](source) || is[Dsl#MustContext[Any]](source) || is[Dsl#TermNode[Any]](source) =>
       TermQuery(astParser(source), identParser(alias), astParser(body), rest.map(astParser(_)))
+
+    case q"$source.exists[$t]({($alias) => $body})"
+      if is[Dsl#FilterContext[Any]](source) || is[Dsl#MustContext[Any]](source) || is[Dsl#TermNode[Any]](source) =>
+      ExistsQuery(astParser(source), identParser(alias), astParser(body))
   }
 
   val termOptionParser: Parser[Ast] = Parser[Ast] {
@@ -78,6 +86,7 @@ trait Parsing {
   val operationParser: Parser[Operation] = Parser[Operation] {
     case `equalityOperationParser`(v) => v
     case `booleanOperationParser`(v) => v
+    case `numericOperationParser`(v) => v
   }
 
   private def rejectOptions(a: Tree, b: Tree): Unit = {
@@ -106,11 +115,16 @@ trait Parsing {
       BinaryOperation(astParser(a), BooleanOperator.`&&`, astParser(b))
   }
 
+  val numericOperationParser: Parser[Operation] = Parser[Operation] {
+    case q"${a: Tree}.>=(${b: Tree})" if isNumeric(c.WeakTypeTag(a.tpe.erasure)) && isNumeric(c.WeakTypeTag(b.tpe.erasure)) =>
+      BinaryOperation(astParser(a), RangeOperator.`>=`, astParser(b))
+  }
+
   val quotedAstParser: Parser[Ast] = Parser[Ast] {
     case q"${_: Tree}.unquote[${_: Tree}](${quoted: Tree})" =>
       astParser(quoted)
 
-    case t if t.tpe <:< c.weakTypeOf[Dsl#Quoted[Any]] =>
+    case t if is[Dsl#Quoted[Any]](t) =>
       unquote[Ast](t) match {
         case Some(ast) if !IsDynamic(ast) =>
           t match {
@@ -136,7 +150,8 @@ trait Parsing {
 
   val valueParser: Parser[Ast] = Parser[Ast] {
     case q"null" => NullValue
-    case Literal(c.universe.Constant(v)) => Constant(v)
+    case Literal(c.universe.Constant(v)) =>
+      Constant(v)
   }
 
   val propertyParser: Parser[Ast] = Parser[Ast] {
@@ -149,6 +164,7 @@ trait Parsing {
   private def isNull(tree: Tree) = is[Null](tree)
   private def isOption(tree: Tree) = is[Option[_]](tree)
   private def isOptionT[T](tree: Tree)(implicit t: TypeTag[T]) = is[Option[T]](tree)
+  private def isNumeric[T: WeakTypeTag]: Boolean = c.inferImplicitValue(c.weakTypeOf[Numeric[T]]) != EmptyTree
 
   private def checkTypes(lhs: Tree, rhs: Tree): Unit = {
     def unquoted(tree: Tree) = if (!is[Dsl#Quoted[Any]](tree)) tree else q"unquote($tree)"

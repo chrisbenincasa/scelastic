@@ -19,6 +19,7 @@ trait LiftableInstances {
     case BinaryOperation(a, b, c) => q"$pack.BinaryOperation($a, $b, $c)"
     case Dynamic(tree: Tree) if (tree.tpe <:< c.weakTypeOf[Dsl#Quoted[Any]]) => q"$tree.ast"
     case Dynamic(tree: Tree) => q"$pack.Constant($tree)"
+    case QuotedReference(_: Tree, ast) => q"$ast"
   }
 
   implicit val queryLiftable: Liftable[Query] = Liftable[Query] {
@@ -27,9 +28,11 @@ trait LiftableInstances {
     case MatchNone => q"$pack.MatchNone"
     case Bool(a, b, c) => q"$pack.Bool($a, $b, $c)"
     case BoolMust(a) => q"$pack.BoolMust($a)"
+    case BoolMustNot(a) => q"$pack.BoolMustNot($a)"
     case BoolFilter(a) => q"$pack.BoolFilter($a)"
     case MatchQuery(a, b, c, d) => q"$pack.MatchQuery($a, $b, $c, $d)"
     case TermQuery(a, b, c, d) => q"$pack.TermQuery($a, $b, $c, $d)"
+    case ExistsQuery(a, b, c) => q"$pack.ExistsQuery($a, $b, $c)"
   }
 
   implicit val binaryOperatorLiftable: Liftable[BinaryOperator] = Liftable[BinaryOperator] {

@@ -60,6 +60,9 @@ trait StatefulTransformer[T] {
       case BoolMust(a) =>
         val (at, att) = apply(a)
         BoolMust(at) -> att
+      case BoolMustNot(a) =>
+        val (at, att) = apply(a)
+        BoolMustNot(at) -> att
       case BoolFilter(a) =>
         val (at, att) = apply(a)
         BoolFilter(at) -> att
@@ -73,6 +76,10 @@ trait StatefulTransformer[T] {
         val (ct, ctt) = att.apply(c)
         val (dt, dtt) = ctt.apply(d)(_.apply)
         MatchQuery(at, b, ct, dt) -> dtt
+      case ExistsQuery(a, b, c) =>
+        val (at, att) = apply(a)
+        val (ct, ctt) = att.apply(c)
+        ExistsQuery(at, b, ct) -> ctt
     }
   }
 
@@ -86,6 +93,15 @@ trait StatefulTransformer[T] {
         val (at, att) = apply(a)
         val (bt, btt) = att.apply(b)(_.apply)
         (FunctionApply(at, bt), btt)
+    }
+
+  def apply(e: Value): (Value, StatefulTransformer[T]) =
+    e match {
+      case e: Constant => (e, this)
+      case NullValue   => (e, this)
+      case Tuple(a) =>
+        val (at, att) = apply(a)(_.apply)
+        (Tuple(at), att)
     }
 
   def apply[U, R](list: List[U])(f: StatefulTransformer[T] => U => (R, StatefulTransformer[T])) =

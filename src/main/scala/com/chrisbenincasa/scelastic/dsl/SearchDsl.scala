@@ -1,9 +1,11 @@
 package com.chrisbenincasa.scelastic.dsl
 
-import com.chrisbenincasa.scelastic.ast.TermQueryOption
 import scala.annotation.compileTimeOnly
 
-trait Dsl extends SearchDsl with QuotedDsl with MetaDsl
+trait Dsl
+  extends SearchDsl
+  with QuotedDsl
+  with MetaDsl
 
 trait SearchDsl {
   def search[T]: IndexSearch[T] = macro SearchDslMacros.expandEntity[T]
@@ -22,6 +24,9 @@ trait SearchDsl {
 
     def bool[R](f: (BoolSearchNode[T] => Search[R])*): Search[R]
 
+    def avg[R](f: T => R): Search[T]
+    def stats[R](f: T => R): Search[T]
+
     def drop(n: Int): Search[T]
     def take(n: Int): Search[T]
   }
@@ -34,7 +39,11 @@ trait SearchDsl {
 
   sealed trait BoolSearchNode[+T] extends BoolSearch[T] {
     def must: MustContext[T]
+    def must_not: MustContext[T]
     def filter: FilterContext[T]
+
+    def minimum_should_match(i: Int): BoolSearch[T]
+    def boost(v: Float): BoolSearch[T]
   }
 
   sealed trait SearchContext[T]
@@ -45,6 +54,8 @@ trait SearchDsl {
     def match_none: BoolSearch[T]
 
     def term(q: T => Boolean, options: QueryOption*): TermNode[T]
+
+    def exists[R](f: T => R): BoolSearch[T]
   }
 
   sealed trait FilterContext[+T] extends BoolSearch[T] {

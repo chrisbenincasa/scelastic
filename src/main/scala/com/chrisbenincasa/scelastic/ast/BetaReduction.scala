@@ -70,6 +70,15 @@ case class BetaReduction(refs: Map[Ast, Ast]) extends Traversal {
       case BoolFilter(a) =>
         BoolFilter(apply(a))
 
+      case TermQuery(a, b, c, opts) =>
+        TermQuery(apply(a), b, BetaReduction(refs - b)(c), opts.map(o => BetaReduction(refs - b)(o)))
+
+      case MatchQuery(a, b, c, opts) =>
+        MatchQuery(apply(a), b, BetaReduction(refs - b)(c), opts.map(o => BetaReduction(refs - b)(o)))
+
+      case ExistsQuery(a, b, c) =>
+        ExistsQuery(apply(a), b, BetaReduction(refs - b)(c))
+
       case _ =>
         super.apply(q)
     }
