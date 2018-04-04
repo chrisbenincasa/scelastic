@@ -1,6 +1,6 @@
 package com.chrisbenincasa.scelastic.queries
 
-import com.chrisbenincasa.scelastic.builders.BoolQueryStruct
+import com.chrisbenincasa.scelastic.builders.{BoolQueryBuilder, BoolQueryStruct}
 
 trait Query
 case class EmptyObject private (x: Option[Int] = None)
@@ -19,7 +19,7 @@ trait MatchQueryClause
 case class MatchQuery(`match`: MatchQueryClause) extends MatchQueryLike
 case class MatchSimple[T](field: String, value: T) extends Map.Map1[String, T](field, value) with MatchQueryClause
 case class MatchComplexBody[T](query: T, operator: Option[String])
-case class MatchComplex[T](field: String, query: T, operator: Option[String])
+case class MatchComplex[T](field: String, query: T, operator: Option[String] = None)
   extends Map.Map1[String, MatchComplexBody[T]](field, MatchComplexBody(query, operator))
   with MatchQueryClause
 
@@ -27,8 +27,10 @@ trait TermQueryLike extends Query
 trait TermQueryClause
 case class TermQuery(term: TermQueryClause) extends TermQueryLike
 case class TermSimple[T](field: String, value: T) extends Map.Map1[String, T](field, value) with TermQueryClause
-case class TermQueryBody[T](value: T, boost: Double)
-case class TermComplex[T](body: TermQueryBody[T]) extends Map.Map1[String, TermQueryBody[T]]("term", body) with TermQueryClause
+case class TermQueryBody[T](value: T, boost: Option[Double])
+case class TermComplex[T](field: String, query: T, boost: Option[Double] = None)
+  extends Map.Map1[String, TermQueryBody[T]]("term", TermQueryBody(query, boost))
+  with TermQueryClause
 
 trait TermsQueryClause
 case class TermsQuery(terms: TermsQueryClause) extends Query
@@ -36,14 +38,22 @@ case class TermsSimple(field: String, terms: Seq[String]) extends Map.Map1[Strin
 case class TermsQueryBody(field: String, terms: Seq[String]) extends Map.Map1[String, Seq[String]](field, terms) with TermQueryClause
 case class TermsComplex(body: TermsQueryBody) extends Map.Map1[String, TermsQueryBody]("terms", body) with TermQueryLike
 
-case class RangeQuery[T: Numeric](clause: RangeQueryClause[T]) extends Map.Map1[String, RangeQueryClause[T]]("range", clause) with Query
-case class RangeQueryClause[T : Numeric](gt: Option[T] = None, gte: Option[T] = None, lt: Option[T] = None, lte: Option[T] = None)
+trait RangeQueryClause
+case class RangeQuery[T : Numeric](field: String, body: RangeQueryBody[T])
+  extends Map.Map1[String, Map.Map1[String, RangeQueryBody[T]]]("range", new Map.Map1(field, body))
+  with Query
+
+case class RangeQueryBody[T : Numeric](gt: Option[T] = None, gte: Option[T] = None, lt: Option[T] = None, lte: Option[T] = None)
+  extends RangeQueryClause
 
 trait CompoundQuery[T] extends Query with Map[String, T]
 
 case class BoolCompoundQuery(boolQueryStruct: BoolQueryStruct)
   extends Map.Map1[String, BoolQueryStruct]("bool", boolQueryStruct)
-  with CompoundQuery[BoolQueryStruct]
+  with CompoundQuery[BoolQueryStruct] {
+
+  def builder: BoolQueryBuilder = BoolQueryBuilder(this)
+}
 
 trait JoinQuery extends Query
 

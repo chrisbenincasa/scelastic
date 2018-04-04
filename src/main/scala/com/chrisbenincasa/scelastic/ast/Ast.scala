@@ -1,15 +1,18 @@
 package com.chrisbenincasa.scelastic.ast
 
-import com.chrisbenincasa.scelastic.params.QueryParam
 import com.chrisbenincasa.scelastic.translate.AstStringTranslation
 
-sealed trait Ast {
-  override def toString: String = {
+object ShowAst {
+  def apply(ast: Ast): String = {
     import AstStringTranslation._
     import com.chrisbenincasa.scelastic.translate.TranslatorImplicits._
-    this.translate.toString
+    ast.translate.toString
   }
+
+  def showRaw(ast: Ast): String = ast.toString
 }
+
+sealed trait Ast
 
 sealed trait Query extends Ast
 

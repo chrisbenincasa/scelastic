@@ -1,5 +1,8 @@
 package com.chrisbenincasa.scelastic
 
+object Builder {
+
+}
 object Params {
   private case class ParamsImpl(m: Map[Param[_], Any]) extends Params {
     def apply[P](implicit param: Param[P]): P = {
@@ -71,3 +74,4 @@ trait ParameterizedBuilder[T, Builds] extends Parameterized[T] {
 
   protected def copy1(params: Params = this.params): T
 }
+

@@ -75,6 +75,11 @@ trait Parsing {
       ExistsQuery(astParser(source), identParser(alias), astParser(body))
   }
 
+//  val aggregationParser: Parser[Ast] = Parser[Ast] {
+//    case q"$source.avg[$t]({($alias) => $body})" =>
+//
+//  }
+
   val termOptionParser: Parser[Ast] = Parser[Ast] {
     case q"$pack.boost($value)" =>
       TermQueryOption.boost(astParser(value))
